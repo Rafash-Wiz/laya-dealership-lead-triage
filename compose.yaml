@@ -1,0 +1,39 @@
+services:
+  laya:
+    build: .
+    image: lead-qualifier-laya:local
+    restart: unless-stopped
+    environment:
+      LAYA_DEVICE: ${LAYA_DEVICE:-cpu}
+      LAYA_MODEL: ${LAYA_MODEL:-auto}
+      LAYA_PRELOAD: ${LAYA_PRELOAD:-0}
+      LAYA_MODELS: ${LAYA_MODELS:-english,multilingual}
+      LAYA_API_KEY: ${LAYA_API_KEY:-}
+      OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
+      HF_HOME: /home/laya/.cache/huggingface
+    ports:
+      - "${LAYA_BIND_ADDRESS:-127.0.0.1}:${LAYA_HOST_PORT:-8000}:8000"
+    volumes:
+      - model-cache:/home/laya/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  web:
+    build: ./web
+    image: lead-qualifier-demo:local
+    restart: unless-stopped
+    environment:
+      LAYA_API_URL: http://laya:8000
+      LAYA_API_KEY: ${LAYA_API_KEY:-}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      laya:
+        condition: service_healthy
+
+volumes:
+  model-cache:

@@ -1,0 +1,15 @@
+services:
+  laya:
+    build:
+      context: .
+      args:
+        TORCH_INDEX: cu130
+    environment:
+      LAYA_DEVICE: cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
